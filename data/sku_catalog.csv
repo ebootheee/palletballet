@@ -1,0 +1,31 @@
+sku,name,weight_kg,length_m,width_m,height_m,fragility,category,default_env
+SKU-FM-001,Frozen Beef Cuts 10kg Box,10.5,0.40,0.30,0.20,rigid,frozen_meat,frozen
+SKU-FM-002,Frozen Pork Loin 15kg Carton,15.2,0.50,0.30,0.20,rigid,frozen_meat,frozen
+SKU-FM-003,Frozen Chicken Breast 12kg Case,12.0,0.45,0.30,0.18,rigid,frozen_meat,frozen
+SKU-FS-001,Frozen Salmon Fillets 8kg Box,8.0,0.40,0.28,0.15,rigid,frozen_seafood,frozen
+SKU-FS-002,Frozen Shrimp 5kg Bag-in-Box,5.0,0.30,0.25,0.15,semi_rigid,frozen_seafood,frozen
+SKU-FS-003,Frozen Whitefish 20kg Master Carton,20.0,0.55,0.35,0.22,rigid,frozen_seafood,frozen
+SKU-FV-001,Frozen Mixed Vegetables 6kg Bag,6.0,0.45,0.30,0.10,semi_rigid,frozen_vegetables,frozen
+SKU-FV-002,Frozen Peas 10kg Carton,10.0,0.40,0.30,0.18,rigid,frozen_vegetables,frozen
+SKU-FV-003,Frozen Spinach 4kg Bag,4.0,0.35,0.25,0.08,semi_rigid,frozen_vegetables,frozen
+SKU-IC-001,Ice Cream Tubs 12-pack 8kg,8.0,0.40,0.30,0.20,rigid,ice_cream,frozen
+SKU-IC-002,Ice Cream Bars 24-pack 5kg,5.0,0.35,0.25,0.15,rigid,ice_cream,frozen
+SKU-FD-001,Cheese Wheel 25kg,25.0,0.40,0.40,0.15,rigid,fresh_dairy,refrigerated
+SKU-FD-002,Yogurt Cups 24-pack 6kg,6.0,0.35,0.25,0.12,rigid,fresh_dairy,refrigerated
+SKU-FD-003,Butter Blocks 10kg Carton,10.0,0.30,0.25,0.20,rigid,fresh_dairy,refrigerated
+SKU-FD-004,Milk Crates 16L 18kg,18.0,0.50,0.35,0.30,rigid,fresh_dairy,refrigerated
+SKU-FP-001,Apples 15kg Crate,15.0,0.50,0.35,0.25,deformable,fresh_produce,refrigerated
+SKU-FP-002,Lettuce Cases 8kg,8.0,0.45,0.30,0.20,deformable,fresh_produce,refrigerated
+SKU-FP-003,Berries Trays 4kg,4.0,0.30,0.25,0.10,deformable,fresh_produce,refrigerated
+SKU-FP-004,Citrus 18kg Crate,18.0,0.50,0.35,0.28,deformable,fresh_produce,refrigerated
+SKU-DG-001,Flour Sacks 25kg,25.0,0.55,0.35,0.15,semi_rigid,dry_goods,thawed
+SKU-DG-002,Sugar Bags 20kg,20.0,0.50,0.30,0.18,semi_rigid,dry_goods,thawed
+SKU-DG-003,Pasta Cartons 12kg,12.0,0.45,0.30,0.20,rigid,dry_goods,thawed
+SKU-DG-004,Cereal Cases 6kg,6.0,0.50,0.35,0.30,rigid,dry_goods,thawed
+SKU-BV-001,Bottled Water 12-pack 18kg,18.0,0.40,0.30,0.25,rigid,beverage,thawed
+SKU-BV-002,Beer Cases 24-pack 16kg,16.0,0.40,0.30,0.30,rigid,beverage,thawed
+SKU-BV-003,Soda Cans 24-pack 9kg,9.0,0.35,0.25,0.20,rigid,beverage,thawed
+SKU-BV-004,Juice Cartons 12-pack 14kg,14.0,0.40,0.30,0.25,rigid,beverage,refrigerated
+SKU-MS-001,Mixed Frozen Pizza 7kg,7.0,0.45,0.40,0.10,rigid,ice_cream,frozen
+SKU-MS-002,Frozen Bread Loaves 8kg,8.0,0.50,0.30,0.15,semi_rigid,frozen_vegetables,frozen
+SKU-MS-003,Heavy Cheese Wheel 35kg,35.0,0.45,0.45,0.18,rigid,fresh_dairy,refrigerated

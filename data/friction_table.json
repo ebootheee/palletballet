@@ -1,0 +1,48 @@
+{
+	"_comment": "Steady-state friction coefficients vs body temperature for common surface pairs in cold-storage conveyor systems. Mu_s = static, mu_d = dynamic. Linearly interpolated between control points.",
+	"_units": {"temperature_c": "Celsius", "mu": "dimensionless"},
+	"surface_pairs": {
+		"wood_pallet/rubber_belt": {
+			"description": "Wooden EUR/GMA pallet on standard rubber conveyor belt.",
+			"control_points": [
+				{"temp_c": -25.0, "mu_s": 0.22, "mu_d": 0.18},
+				{"temp_c": -15.0, "mu_s": 0.28, "mu_d": 0.23},
+				{"temp_c": -5.0,  "mu_s": 0.34, "mu_d": 0.28},
+				{"temp_c": 0.0,   "mu_s": 0.30, "mu_d": 0.25},
+				{"temp_c": 5.0,   "mu_s": 0.38, "mu_d": 0.32},
+				{"temp_c": 15.0,  "mu_s": 0.46, "mu_d": 0.40},
+				{"temp_c": 25.0,  "mu_s": 0.52, "mu_d": 0.45}
+			]
+		},
+		"plastic_pallet/rubber_belt": {
+			"description": "HDPE plastic pallet on rubber belt — generally lower friction than wood.",
+			"control_points": [
+				{"temp_c": -25.0, "mu_s": 0.18, "mu_d": 0.14},
+				{"temp_c": -15.0, "mu_s": 0.22, "mu_d": 0.18},
+				{"temp_c": -5.0,  "mu_s": 0.28, "mu_d": 0.23},
+				{"temp_c": 0.0,   "mu_s": 0.24, "mu_d": 0.20},
+				{"temp_c": 5.0,   "mu_s": 0.32, "mu_d": 0.27},
+				{"temp_c": 15.0,  "mu_s": 0.38, "mu_d": 0.33},
+				{"temp_c": 25.0,  "mu_s": 0.42, "mu_d": 0.36}
+			]
+		},
+		"wood_pallet/steel_roller": {
+			"description": "Wooden pallet on powered steel roller conveyor.",
+			"control_points": [
+				{"temp_c": -25.0, "mu_s": 0.16, "mu_d": 0.12},
+				{"temp_c": -15.0, "mu_s": 0.20, "mu_d": 0.15},
+				{"temp_c": -5.0,  "mu_s": 0.24, "mu_d": 0.19},
+				{"temp_c": 0.0,   "mu_s": 0.22, "mu_d": 0.17},
+				{"temp_c": 5.0,   "mu_s": 0.27, "mu_d": 0.22},
+				{"temp_c": 15.0,  "mu_s": 0.32, "mu_d": 0.27},
+				{"temp_c": 25.0,  "mu_s": 0.36, "mu_d": 0.30}
+			]
+		}
+	},
+	"transition_penalty": {
+		"_comment": "When a frozen pallet enters a warmer zone, frost begins melting on the runners. Friction drops sharply for several minutes until either the surface dries (warm zone) or refreezes. This multiplier is applied on top of the steady-state mu.",
+		"danger_zone_temp_c": [-2.0, 8.0],
+		"min_multiplier": 0.65,
+		"recovery_seconds": 600.0
+	}
+}
