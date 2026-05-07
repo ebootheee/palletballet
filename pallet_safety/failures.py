@@ -33,7 +33,8 @@ def tip_angle_deg(trace: SimulationTrace) -> np.ndarray:
     1 - 2*(x^2 + y^2). arccos(that) is the tilt angle.
     """
     q = trace.pallet_quat
-    w, x, y, z = q[:, 0], q[:, 1], q[:, 2], q[:, 3]
+    # quat layout (w, x, y, z); only x and y are needed for the world-Z tilt.
+    x, y = q[:, 1], q[:, 2]
     cos_tilt = np.clip(1.0 - 2.0 * (x * x + y * y), -1.0, 1.0)
     return np.degrees(np.arccos(cos_tilt))
 
@@ -81,7 +82,6 @@ def detect_load_shift(trace: SimulationTrace, threshold_m: float) -> float | Non
     if trace.n_items < 2:
         return None
     initial = trace.item_initial_pallet_pos
-    n = trace.n_items
     # Initial pairwise distances
     init_d = np.linalg.norm(initial[:, None, :] - initial[None, :, :], axis=2)
     for step in range(trace.n_steps):

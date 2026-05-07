@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from pallet_safety.configurator import StackSpec, build_from_stacks
-from pallet_safety.models import EnvCondition, FailureMode, WrapType
+from pallet_safety.models import EnvCondition, FailureMode, PalletConfig, WrapType
 from pallet_safety.threshold import (
     SearchConfig,
     ThresholdAnalyzer,

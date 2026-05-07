@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from pallet_safety.configurator import StackSpec, build_from_stacks, compute_grid_shape
-from pallet_safety.models import EnvCondition, PalletConfig, WrapType
+from pallet_safety.models import EnvCondition, PalletConfig
 
 
 def _stack(sku="SKU-FD-002", r=0, c=0, h=5):

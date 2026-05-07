@@ -188,7 +188,7 @@ def test_safety_analyze_stable_pallet(client):
 def test_safety_analyze_caches(client):
     """Two identical requests — second should have cache_hits >= 1."""
     cfg = client.post("/pallet/random", json={"seed": 7, "anomaly_rate": 0.0}).json()
-    r1 = client.post("/safety/analyze", json=cfg).json()
+    client.post("/safety/analyze", json=cfg).json()  # populate cache
     r2 = client.post("/safety/analyze", json=cfg).json()
     assert r2["cache_hits"] >= 1
     assert r2["sims_run"] == 0

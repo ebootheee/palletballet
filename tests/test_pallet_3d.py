@@ -132,8 +132,8 @@ def test_animate_trace_has_play_pause_buttons():
     fig = animate_trace(trace, max_frames=10)
     btns = fig.layout.updatemenus[0].buttons
     labels = [b.label for b in btns]
-    assert any("Play" in l for l in labels)
-    assert any("Pause" in l for l in labels)
+    assert any("Play" in label for label in labels)
+    assert any("Pause" in label for label in labels)
 
 
 def test_animate_trace_has_slider():

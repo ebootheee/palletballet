@@ -7,7 +7,7 @@ Phase C of PLAN_V2. The solver does not decide pass/fail — that's done by
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
 
 import mujoco

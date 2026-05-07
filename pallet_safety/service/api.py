@@ -33,7 +33,6 @@ from ..friction import (
     DEFAULT_PAIR,
     available_surface_pairs,
     friction_coefficient,
-    steady_state_mu,
 )
 from ..inputs import MockRandomAdapter
 from ..inputs.base import RawInputs

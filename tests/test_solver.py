@@ -10,7 +10,7 @@ import time
 import numpy as np
 import pytest
 
-from pallet_safety.models import EnvCondition, Item, PalletConfig, WrapType
+from pallet_safety.models import EnvCondition, Item, PalletConfig
 from pallet_safety.solver import ConveyorProfile, simulate
 
 
@@ -94,7 +94,7 @@ def test_simulate_runtime_per_step_under_budget():
     cfg = _stable_pallet()
     profile = ConveyorProfile(target_speed_mps=0.5, accel_mps2=0.5, duration_s=2.0)
     t0 = time.perf_counter()
-    trace = simulate(cfg, profile)
+    simulate(cfg, profile)
     wall_ms = (time.perf_counter() - t0) * 1000
     sim_ms = profile.duration_s * 1000
     # On dev machine, 2-second sim of 1-item pallet should be under 100ms wall

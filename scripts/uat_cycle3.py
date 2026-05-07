@@ -43,7 +43,7 @@ def main() -> int:
         page.wait_for_timeout(2500)
         (SHOTS / "A_stable.png").unlink(missing_ok=True)
         page.screenshot(path=str(SHOTS / "A_stable.png"), full_page=True)
-        print(f"  [shot] A_stable.png")
+        print("  [shot] A_stable.png")
 
         # --- Scenario B: crash preset via Manual page → analyze → see the failure ---
         print("\n[B] Crash-test preset — expect red X + narrower green envelope")
@@ -73,7 +73,7 @@ def main() -> int:
         page.wait_for_timeout(3000)
         (SHOTS / "B_crash.png").unlink(missing_ok=True)
         page.screenshot(path=str(SHOTS / "B_crash.png"), full_page=True)
-        print(f"  [shot] B_crash.png")
+        print("  [shot] B_crash.png")
 
         browser.close()
     return 0
