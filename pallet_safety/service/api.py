@@ -19,6 +19,7 @@ Endpoints:
 
 from __future__ import annotations
 
+import os
 from typing import Annotated
 
 from fastapi import Body, FastAPI, HTTPException, Query
@@ -46,9 +47,15 @@ app = FastAPI(
     description="Pluggable input engine + physics inference for cold-storage conveyor systems.",
     version="0.1.0",
 )
+_default_origins = "https://boothe.io,https://www.boothe.io,http://localhost:4321"
+_allowed_origins = [
+    o.strip()
+    for o in os.getenv("ALLOWED_ORIGINS", _default_origins).split(",")
+    if o.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -2,6 +2,9 @@
 
 Per-pallet physics inference for cold-storage conveyor speed governance.
 
+**Live demo:** [boothe.io/palletballet](https://boothe.io/palletballet)
+**API:** [palletballet-api.boothe.io/docs](https://palletballet-api.boothe.io/docs)
+
 This project turns a scanned or configured pallet into a safe conveyor profile:
 maximum speed, maximum acceleration, dominant failure mode, confidence, and a
 trace explaining why. The Streamlit UI is intentionally visual and game-like so
@@ -235,20 +238,18 @@ it is not trying to replace them.
 - **Adapter-friendly design**: scanner, WMS, manual UI, and mock random inputs
   all converge on the same `PalletConfig` contract.
 
-## Deployment notes
+## Deployment
 
-The full runtime is Python plus native simulation dependencies. It is best
-deployed as a container or VM-backed service, then exposed through Cloudflare
-DNS, Tunnel, Access, or a reverse proxy. A pure Cloudflare Pages/Workers deploy
-is suitable for a static marketing shell or proxy, but not for the full MuJoCo
-solver runtime without a separate compute host.
+The live demo runs on a home Ubuntu server fronted by a Cloudflare Tunnel. The
+service is published as a Docker image to GHCR on every push to `main`, and
+Watchtower on the server pulls and restarts within 5 minutes. See
+[`infra/README.md`](infra/README.md) for the full setup.
 
-Recommended demo path:
-
-1. Run API and UI on a container host or internal edge box.
-2. Put Cloudflare in front with TLS and access control.
-3. Set `PALLET_API_URL` for the UI if the API is hosted separately.
-4. Use `/healthz` and `/docs` as smoke checks after deployment.
+If you want to host your own copy: clone, `docker compose up -d` in `infra/`,
+done. Cloudflare Containers (GA April 2026) is also a viable target for the
+same Dockerfile if you'd rather not self-host — it skips the cold-start
+problem at the cost of $5–20/mo and a known WebSocket-timeout bug on long
+sessions.
 
 ## Validation status
 

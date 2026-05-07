@@ -1,0 +1,35 @@
+services:
+  palletballet:
+    image: ghcr.io/ebootheee/palletballet:latest
+    container_name: palletballet
+    restart: unless-stopped
+    expose:
+      - "8000"
+    networks:
+      - palletballet
+    environment:
+      ALLOWED_ORIGINS: "https://boothe.io,https://www.boothe.io"
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: palletballet-tunnel
+    restart: unless-stopped
+    depends_on:
+      - palletballet
+    networks:
+      - palletballet
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: palletballet-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 300 --cleanup --label-enable
+
+networks:
+  palletballet:
+    name: palletballet
