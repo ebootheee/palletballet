@@ -7,11 +7,16 @@ Endpoints:
     GET    /healthz                       liveness
     GET    /catalog/skus                  list catalog SKUs
     GET    /catalog/skus/{sku}            one SKU detail
+    GET    /scenarios                     curated demo scenario summaries
+    GET    /scenarios/{slug}              one scenario: pallet + suggested profile
     POST   /raw/random                    invoke MockRandomAdapter, return RawInputs
     POST   /pallet/from-raw               RawInputs → PalletConfig
     POST   /pallet/random                 convenience: random → PalletConfig in one call
     POST   /pallet/validate               echo a PalletConfig if valid (422 otherwise)
     POST   /mjcf/build                    PalletConfig → MJCF XML
+    POST   /solve                         run one conveyor profile, return failure + trace
+    POST   /safety/analyze                max safe envelope for one pallet
+    POST   /safety/batch                  envelopes for a list of pallets
     GET    /friction                      look up mu at one (T, seconds-since, pair)
     GET    /friction/curve                full mu(T) curve for a surface pair
     GET    /friction/pairs                list available surface pairs
@@ -22,10 +27,12 @@ from __future__ import annotations
 import os
 from typing import Annotated
 
+import numpy as np
 from fastapi import Body, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from .. import __version__
 from ..catalog import all_skus, get as get_template
 from ..configurator import Configurator
 from ..failures import FailureThresholds, first_failure, tip_angle_deg
@@ -37,14 +44,22 @@ from ..friction import (
 from ..inputs import MockRandomAdapter
 from ..inputs.base import RawInputs
 from ..mjcf_builder import build_mjcf
-from ..models import EnvCondition, FailureMode, FragilityClass, PalletConfig, SafetyResult
-from ..solver import ConveyorProfile, simulate
+from ..models import (
+    EnvCondition,
+    FailureMode,
+    FragilityClass,
+    PalletConfig,
+    SafetyResult,
+    Vec3,
+)
+from ..scenarios import Scenario, all_scenarios, get_scenario
+from ..solver import ConveyorProfile, SimulationTrace, simulate
 from ..threshold import AnalysisResult, default_analyzer
 
 app = FastAPI(
     title="Pallet Safety Service",
     description="Pluggable input engine + physics inference for cold-storage conveyor systems.",
-    version="0.1.0",
+    version=__version__,
 )
 _default_origins = "https://boothe.io,https://www.boothe.io,http://localhost:4321"
 _allowed_origins = [
@@ -110,8 +125,42 @@ class RandomRequest(BaseModel):
 
 @app.get("/healthz", response_model=HealthResponse, tags=["meta"])
 def healthz():
-    from .. import __version__
     return HealthResponse(status="ok", version=__version__)
+
+
+class ScenarioSummary(BaseModel):
+    slug: str
+    name: str
+    tag: str
+    description: str
+    expected_failure: str
+    item_count: int
+    total_mass_kg: float
+    stack_height_m: float
+
+
+@app.get("/scenarios", response_model=list[ScenarioSummary], tags=["scenarios"])
+def list_scenarios():
+    """Curated demo scenarios: one baseline, four engineered failures, one random feed."""
+    return [
+        ScenarioSummary(
+            slug=s.slug, name=s.name, tag=s.tag, description=s.description,
+            expected_failure=s.expected_failure,
+            item_count=len(s.pallet.items),
+            total_mass_kg=s.pallet.total_mass_kg,
+            stack_height_m=s.pallet.stack_height_m,
+        )
+        for s in all_scenarios()
+    ]
+
+
+@app.get("/scenarios/{slug}", response_model=Scenario, tags=["scenarios"])
+def scenario_detail(slug: str):
+    """Full scenario: the exact PalletConfig plus a suggested conveyor profile."""
+    try:
+        return get_scenario(slug)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
 
 
 @app.get("/catalog/skus", response_model=list[SkuInfo], tags=["catalog"])
@@ -220,6 +269,10 @@ class SolveRequest(BaseModel):
     thresholds: FailureThresholds = Field(default_factory=FailureThresholds)
     output_hz: float = Field(default=50.0, ge=1, le=1000,
                               description="Trace downsample rate.")
+    include_replay: bool = Field(
+        default=False,
+        description="Attach per-item 6-DoF pose traces so a client can render "
+                    "a full 3D replay (adds ~50-150 KB to the response).")
 
 
 class FailureSummary(BaseModel):
@@ -236,12 +289,44 @@ class TraceSeries(BaseModel):
     tip_angle_deg: list[float]
 
 
+Quat = tuple[float, float, float, float]
+
+
+class ReplayItem(BaseModel):
+    """Static geometry for one simulated body, index-aligned with the pose arrays."""
+    sku: str
+    name: str
+    dims_m: Vec3
+    fragility: FragilityClass
+    category: str
+
+
+class ReplayData(BaseModel):
+    """Everything a renderer needs to replay the sim in 3D.
+
+    Poses are world-frame. Quaternions use MuJoCo's (w, x, y, z) layout.
+    `pallet_pos_m` and `item_pos_m[f][k]` are BODY CENTERS (geom centers),
+    not bottom-face anchors — draw each box centered on its pose.
+    `belt_disp_m` is the integrated belt displacement, for scrolling a
+    belt texture in sync with the physics.
+    """
+    times_s: list[float]
+    belt_disp_m: list[float]
+    base_dims_m: Vec3
+    pallet_pos_m: list[Vec3]
+    pallet_quat_wxyz: list[Quat]
+    items: list[ReplayItem]
+    item_pos_m: list[list[Vec3]]       # [frame][item]
+    item_quat_wxyz: list[list[Quat]]   # [frame][item]
+
+
 class SolveResponse(BaseModel):
     pallet_id: str
     failure: FailureSummary
     trace: TraceSeries
     runtime_ms: float
     n_steps_simulated: int
+    replay: ReplayData | None = None
 
 
 # ---- /safety : Phase D ----
@@ -312,6 +397,39 @@ def solve(req: SolveRequest):
         ),
         runtime_ms=trace.runtime_s * 1000.0,
         n_steps_simulated=trace.n_steps,
+        replay=_build_replay(ds, req.pallet) if req.include_replay else None,
+    )
+
+
+def _build_replay(ds: SimulationTrace, cfg: PalletConfig) -> ReplayData:
+    """Pack a (downsampled) trace into renderer-ready pose arrays."""
+    if len(ds.times) > 1:
+        dt = np.diff(ds.times, prepend=ds.times[0])
+        belt_disp = np.cumsum(ds.conveyor_vel * dt)
+    else:
+        belt_disp = np.zeros_like(ds.times)
+
+    items: list[ReplayItem] = []
+    for item in cfg.items:
+        try:
+            tpl = get_template(item.sku)
+            name, category = tpl.name, tpl.category
+        except KeyError:
+            name, category = item.sku, "unknown"
+        items.append(ReplayItem(
+            sku=item.sku, name=name, dims_m=item.dims_m,
+            fragility=item.fragility, category=category,
+        ))
+
+    return ReplayData(
+        times_s=ds.times.tolist(),
+        belt_disp_m=belt_disp.tolist(),
+        base_dims_m=cfg.base_dims_m,
+        pallet_pos_m=ds.pallet_pos.tolist(),
+        pallet_quat_wxyz=ds.pallet_quat.tolist(),
+        items=items,
+        item_pos_m=ds.item_world_pos.tolist(),
+        item_quat_wxyz=ds.item_world_quat.tolist(),
     )
 
 

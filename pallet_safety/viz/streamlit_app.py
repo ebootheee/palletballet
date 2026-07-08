@@ -41,6 +41,7 @@ from pallet_safety.friction import (  # noqa: E402
 from pallet_safety.inputs import MockRandomAdapter  # noqa: E402
 from pallet_safety.mjcf_builder import build_mjcf  # noqa: E402
 from pallet_safety.models import EnvCondition, FailureMode, PalletConfig, WrapType  # noqa: E402
+from pallet_safety.scenarios import all_scenarios, get_scenario_by_name  # noqa: E402
 from pallet_safety.solver import ConveyorProfile, simulate  # noqa: E402
 from pallet_safety.threshold import AnalysisResult, default_analyzer  # noqa: E402
 from pallet_safety.viz.pallet_3d import animate_trace, render as render_pallet  # noqa: E402
@@ -457,89 +458,18 @@ BASE_DEFAULTS = {
     "CHEP": {"dims": (1.2, 0.8, 0.15), "mass": 18.0},
 }
 
+# Canonical scenario data lives in pallet_safety.scenarios (shared with the
+# API's GET /scenarios and the public web demo). This view adapts it to the
+# dict shape the console's widgets read.
 DEMO_SCENARIOS: dict[str, dict[str, Any]] = {
-    "Stable dairy slab": {
-        "tag": "High confidence baseline",
-        "failure_type": "none expected",
-        "description": "Low, even dairy cases with stretch wrap. This is the trust-building baseline: fast enough to be useful, boring enough to pass.",
-        "stacks": [
-            {"sku": "SKU-FD-001", "grid_row": r, "grid_col": c, "height": 2}
-            for r in range(2) for c in range(2)
-        ],
-        "wrap": "stretch",
-        "env": "refrigerated",
-        "body_temp": 2.0,
-        "profile": {"target_speed_mps": 0.9, "accel_mps2": 0.8, "duration_s": 2.5},
-    },
-    "Frozen meat sprint": {
-        "tag": "Friction-limited cold run",
-        "failure_type": "pallet slip at aggressive accel",
-        "description": "Dense frozen beef cartons with wrap in a frozen room. The load itself is solid; the interesting limit is belt-to-pallet friction during a hard start.",
-        "stacks": [
-            {"sku": "SKU-FM-001", "grid_row": r, "grid_col": c, "height": 4}
-            for r in range(2) for c in range(3)
-        ],
-        "wrap": "stretch",
-        "env": "frozen",
-        "body_temp": -25.0,
-        "profile": {"target_speed_mps": 1.4, "accel_mps2": 3.2, "duration_s": 2.0},
-    },
-    "Tall unwrapped tower": {
-        "tag": "Visible failure demo",
-        "failure_type": "tip over / top item slide",
-        "description": "A narrow yogurt tower with no wrap. It is intentionally bad so the replay shows the solver crossing the stability boundary.",
-        "stacks": [{"sku": "SKU-FD-002", "grid_row": 0, "grid_col": 1, "height": 8}],
-        "wrap": "none",
-        "env": "refrigerated",
-        "body_temp": 2.0,
-        "profile": {"target_speed_mps": 2.0, "accel_mps2": 6.0, "duration_s": 1.5},
-    },
-    "Top-heavy surprise": {
-        "tag": "Load-shift trap",
-        "failure_type": "top item slide / load shift",
-        "description": "A tall heavy-cheese column rides without wrap. It looks compact, but the vertical mass stack becomes the weak point during a hard conveyor start.",
-        "stacks": [
-            {"sku": "SKU-MS-003", "grid_row": 0, "grid_col": 1, "height": 6},
-        ],
-        "wrap": "none",
-        "env": "refrigerated",
-        "body_temp": 2.0,
-        "profile": {"target_speed_mps": 1.2, "accel_mps2": 4.0, "duration_s": 2.0},
-    },
-    "Frozen pallet jerk-start": {
-        "tag": "Pallet-slip failure",
-        "failure_type": "pallet slip",
-        "description": "The same dense frozen-meat footprint without wrap and with a sharper conveyor hit. Use it to see floor friction become the governing constraint.",
-        "stacks": [
-            {"sku": "SKU-FM-001", "grid_row": r, "grid_col": c, "height": 4}
-            for r in range(2) for c in range(3)
-        ],
-        "wrap": "none",
-        "env": "frozen",
-        "body_temp": -25.0,
-        "profile": {"target_speed_mps": 1.5, "accel_mps2": 4.0, "duration_s": 1.5},
-    },
-    "Asymmetric load": {
-        "tag": "Off-center tip test",
-        "failure_type": "offset-driven top item slide",
-        "description": "A low dairy stack counterbalances a much taller cheese column on the opposite side. The UI should make the center-of-mass offset obvious before the replay proves it.",
-        "stacks": [
-            {"sku": "SKU-FD-001", "grid_row": 0, "grid_col": 0, "height": 1},
-            {"sku": "SKU-MS-003", "grid_row": 0, "grid_col": 1, "height": 5},
-        ],
-        "wrap": "none",
-        "env": "refrigerated",
-        "body_temp": 2.0,
-        "profile": {"target_speed_mps": 1.5, "accel_mps2": 5.0, "duration_s": 1.5},
-    },
-    "Random scanner feed": {
-        "tag": "Mock adapter payload",
-        "failure_type": "unknown until analyzed",
-        "description": "A scanner-like randomized pallet generated through the same RawInputs to PalletConfig path that a camera or WMS adapter would use.",
-        "random": True,
-        "seed": 42,
-        "profile": {"target_speed_mps": 0.85, "accel_mps2": 1.0, "duration_s": 2.5},
-    },
+    s.name: {
+        "slug": s.slug,
+        "tag": s.tag,
+        "failure_type": s.expected_failure,
+        "description": s.description,
+        "profile": s.suggested_profile.model_dump(),
+    }
+    for s in all_scenarios()
 }
 
 CRASH_PRESETS = {
@@ -566,21 +496,8 @@ def _fmt_sku(sku: str) -> str:
 
 
 def _build_demo_scenario(name: str) -> tuple[PalletConfig, ConveyorProfile]:
-    spec = DEMO_SCENARIOS[name]
-    profile = ConveyorProfile(**spec["profile"])
-    if spec.get("random"):
-        cfg = random_pallet(spec.get("seed"), 0.10, 2, 5, 2, 5)
-        return cfg, profile
-
-    stacks = [StackSpec(**s) for s in spec["stacks"]]
-    cfg = build_from_stacks(
-        stacks,
-        pallet_id=name.lower().replace(" ", "-"),
-        env=EnvCondition(spec["env"]),
-        body_temp_c=float(spec["body_temp"]),
-        wrap=WrapType(spec["wrap"]),
-    )
-    return cfg, profile
+    s = get_scenario_by_name(name)
+    return s.pallet.model_copy(deep=True), s.suggested_profile
 
 
 def _pallet_hash(cfg: PalletConfig) -> str:
