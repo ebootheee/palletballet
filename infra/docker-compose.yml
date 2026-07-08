@@ -26,6 +26,9 @@ services:
     image: containrrr/watchtower:latest
     container_name: palletballet-watchtower
     restart: unless-stopped
+    environment:
+      # Watchtower's client defaults to API 1.25; modern dockerd requires >=1.44.
+      DOCKER_API_VERSION: "1.44"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 300 --cleanup --label-enable
