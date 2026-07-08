@@ -36,3 +36,4 @@ output/
 
 # Stray root-level screenshots (curated uat_screenshots*/ folders are tracked)
 /Screenshot*.png
+.gstack/
