@@ -152,10 +152,11 @@ _SPECS: list[dict] = [
         "expected_failure": "unknown until analyzed",
         "description": (
             "A scanner-like randomized pallet generated through the same RawInputs "
-            "to PalletConfig path that a camera or WMS adapter would use."
+            "to PalletConfig path that a camera or WMS adapter would use. This one "
+            "is mid frost-melt — the friction regime where cold rooms lose pallets."
         ),
         "random": True,
-        "seed": 42,
+        "seed": 23,
         "profile": {"target_speed_mps": 0.85, "accel_mps2": 1.0, "duration_s": 2.5},
     },
 ]

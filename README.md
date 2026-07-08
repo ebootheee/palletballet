@@ -2,8 +2,13 @@
 
 Per-pallet physics inference for cold-storage conveyor speed governance.
 
-**Live demo:** [boothe.io/palletballet](https://boothe.io/palletballet)
+**Play it live:** [boothe.io/palletballet](https://boothe.io/palletballet) — dial a belt speed, dispatch a real MuJoCo sim, watch the 3D replay, then see the envelope the solver would have set.
 **API:** [palletballet-api.boothe.io/docs](https://palletballet-api.boothe.io/docs)
+**Deep-dive:** [boothe.io/posts/launching-palletballet](https://boothe.io/posts/launching-palletballet)
+
+Running your own instance? The live game page plays against any clone:
+`https://boothe.io/palletballet?api=http://localhost:8000` (the default CORS
+allowlist already permits it).
 
 This project turns a scanned or configured pallet into a safe conveyor profile:
 maximum speed, maximum acceleration, dominant failure mode, confidence, and a
@@ -31,16 +36,20 @@ failure modes such as pallet slip, top-item slide, load shift, and tip-over.
 
 - Streamlit operator console at `http://localhost:8501`
 - FastAPI service at `http://localhost:8000/docs`
+- Canonical scenario registry (`GET /scenarios`) shared by the console, the
+  API, and the public web game
+- `POST /solve` with `include_replay`: per-frame 6-DoF poses for the pallet
+  and every item — a browser can replay the sim in 3D (~60 KB at 30 Hz)
 - SKU catalog with cold-storage product templates
 - Mock scanner/random adapter for repeatable dev and batch testing
 - Manual stack-by-stack pallet builder
 - Known failure scenarios for quick demo topples
 - MuJoCo-backed solver and Plotly replay/trace views
 - Threshold analyzer for max safe speed and acceleration
-- Batch runner with human-readable pallet profiles
+- Batch runner (`scripts/batch_study.py`): ~7.5 pallets/s on a 16-core box
 - Pydantic API contracts for `RawInputs`, `PalletConfig`, and `SafetyResult`
-- Test suite covering catalog, configurator, friction, MJCF, solver, API, and
-  threshold behavior
+- Test suite covering catalog, configurator, friction, MJCF, solver, API,
+  scenarios, replay, and threshold behavior
 
 ## Product flow
 
