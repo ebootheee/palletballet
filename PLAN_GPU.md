@@ -13,7 +13,8 @@ simultaneous safety-margin decisions, on premise, with the float64 CPU solver
 as complete redundancy.
 
 **Hardware on hand:** 2× RTX 5090 (32GB each), driver 595, CUDA 13.2 — exceeds
-mujoco-warp's requirements. The dev box is also the production home server.
+mujoco-warp's requirements. (Since 2026-07-08 production serving lives on
+a CPU-only NAS box — the GPUs stay on the dev box.)
 
 **Prime directive:** classic CPU MuJoCo stays the source of truth and the
 serving engine for `/solve`. The GPU backend must *earn* trust through the
@@ -114,7 +115,43 @@ the CPU must simulate. The safe-side bias means the GPU map errs toward
 tighter envelopes, never looser ones, which is the correct failure direction
 for a safety product.
 
-Full 300-pallet study: `data/agreement_study.parquet` (see summary in repo).
+### Phase 1 final results (2026-07-08, 307 pallets × 72 cells = 22,104 sims/backend)
+
+**Verdict: mjwarp 3.10 is not fidelity-ready for wrapped pallets — the GPU
+branch stays experimental.** Full data: `data/agreement_study.parquet`
+(regenerate with `scripts/agreement_study.py`).
+
+- Overall verdict agreement collapsed to **55%** — driven almost entirely by
+  `load_shift` false-positives on wrapped pallets: GPU flags 84% of all cells
+  unsafe vs CPU's 42%, and the worst pallets fail all 72 cells *including
+  near-zero-speed profiles*, which cannot be conveyor physics.
+- Root cause isolated: **mjwarp's weld/equality solve rings in fp32.** On a
+  48-weld stretch-wrapped pallet at a gentle profile, item pairwise drift is
+  ~1.6–2.2 cm on GPU (over the 2 cm load-shift threshold) vs ~0.5 cm on
+  CPU-Euler-fp64 — same integrator, same model, so it's the constraint solve,
+  not Euler. Longer settle doesn't help (steady-state oscillation, not
+  compaction). Softening weld `solref` is not a viable knob: tc=0.1 quiets the
+  GPU but visibly changes CPU physics; tc=0.05 makes GPU *worse* (resonance).
+- Split by wrap: **unwrapped 91.7%** agreement (288 cells, small n),
+  **stretch-wrapped 55.0%** (21,816 cells). Wrapped dominates the real-world
+  population, so this gates everything.
+- GPU arm also slower at population scale than the spike suggested: ~16 s per
+  pallet (varied topologies trigger Warp kernel recompiles per unique model
+  dims; disk-cached, but the corpus has many distinct shapes).
+
+**Standing posture:**
+1. GPU usable today only for unwrapped loads and research sweeps, always under
+   CPU edge-verification (two-stage). No product surface depends on it.
+2. Retest on every mjwarp/Newton release: bump the pin deliberately, rerun
+   `agreement_study.py`, diff the summary. The weld ring is exactly the kind
+   of thing under active upstream development — Newton's Kamino solver is an
+   alternative backend worth testing when its MJCF path matures.
+3. Prepare a minimal upstream repro (one welded box, fp32 drift vs fp64) —
+   contribution-grade finding for the mujoco_warp issue tracker.
+4. The follow-up blog post reframes: "we put a safety solver on consumer GPUs
+   and here is precisely where fp32 physics stops being trustworthy," with the
+   agreement heatmaps as the centerpiece. Arguably a better post than a
+   speedup story.
 
 ## Phase 2 — Grid backend
 
@@ -138,7 +175,7 @@ Goal: `GridAnalyzer` — the GPU-native replacement for double bisection.
 
 - [ ] Game reveal panel: render the failure-mode heatmap behind the envelope reveal — "here's the whole map; you were here."
 - [ ] Follow-up blog post: the agreement study, the heatmaps, the 40k-pallet rerun, benchmark tables, and the on-premise redundancy argument.
-- [ ] Optional: GPU serving from the home server (nvidia-container-toolkit in `infra/docker-compose.yml`) — decide only when there's a consumer for sub-second grid calls.
+- [ ] Optional: GPU serving (nvidia-container-toolkit in `infra/docker-compose.yml`) — would mean hosting the API back on the dev box, since prod now lives on the GPU-less NAS. Decide only when there's a consumer for sub-second grid calls.
 
 ## Risks / escape hatches
 
