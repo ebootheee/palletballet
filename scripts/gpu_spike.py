@@ -180,7 +180,6 @@ def grid_test(config, base, n_speeds=32, n_accels=16, verbose=True):
 
     pallet_id = int(mjm.body("pallet_base").id)
     item_ids = np.array([int(mjm.body(f"item_{i}").id) for i in range(len(config.items))])
-    conveyor_qv0 = int(mjm.joint("conveyor_slide").dofadr[0])
 
     timestep = float(mjm.opt.timestep)
     n_settle = int(SETTLE_S / timestep)
@@ -226,11 +225,8 @@ def grid_test(config, base, n_speeds=32, n_accels=16, verbose=True):
     wp.synchronize()
     wall = time.perf_counter() - t0
 
-    r_times = np.maximum((np.array(rec_steps) - n_settle) * timestep, 0.0)
     xpos_h = rec_xpos.numpy()    # (n_rec, nworld, nbody, 3)
     xquat_h = rec_xquat.numpy()
-    qvel_h = rec_qvel.numpy()
-    r_conveyor = qvel_h[:, :, conveyor_qv0]
     r_ppos = xpos_h[:, :, pallet_id].astype(np.float64)
     r_pquat = xquat_h[:, :, pallet_id].astype(np.float64)
     r_ipos = xpos_h[:, :, item_ids].astype(np.float64)
