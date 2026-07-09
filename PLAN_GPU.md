@@ -82,6 +82,40 @@ Goal: quantify fp32-GPU vs fp64-CPU disagreement before trusting any GPU verdict
   - **Derived envelope agreement:** max safe speed from the GPU grid within one search-precision step (0.05 m/s) of CPU bisection for ≥ 95% of pallets.
 - [ ] Output: `data/agreement_study.parquet` + a summary table. This becomes the centerpiece chart of the follow-up blog post regardless of outcome — "here is exactly where fp32 physics diverges" is a good post even if the answer is "too much."
 
+### Phase 1 findings so far (2026-07-08, smoke corpus: 7 scenarios + 2 random)
+
+The naive gate **fails**, and the failure is informative:
+
+- Verdict agreement only ~85% (gate: ≥99%). But 92 of 97 disagreements are
+  **safe-side** — GPU fails cells the CPU passes. The GPU backend
+  systematically over-predicts `top_item_slide` on long rollouts (item
+  "walking" under sustained belt motion: cell criticality 1.42 on GPU vs 0.53
+  on CPU at 2 ms; halving/quartering the timestep converges it down to ~1.1,
+  never to CPU). Not an integrator artifact: CPU-euler-fp64 matches
+  CPU-implicitfast-fp64 (0.61 vs 0.53). Not gross collision divergence either
+  (post-settle manifolds: 42 vs 36 contacts, similar depths). Residual suspects:
+  fp32 friction stick-slip creep and solver behavior under mjwarp's Newton
+  implementation.
+- 5 of 97 disagreements are **dangerous-side** (CPU-unsafe, GPU-safe): 2 are
+  knife-edge flips (criticality ≈ 1.0 both sides), 3 are `load_shift` misses
+  on frozen-pallet-jerk-start — a *wrapped* pallet, so the weld-constraint
+  solve is implicated. Track upstream; retest each mjwarp release.
+- Batched worlds are **not deterministic**: 72 identical worlds spread
+  criticality 0.98–2.17 on a knife-edge cell (fp32 atomics × stick-slip
+  chaos). Near-edge GPU verdicts are samples, not answers.
+
+**Architectural consequence — two-stage hybrid.** The GPU cannot be the sole
+verdict source at mjwarp 3.10 fidelity. It doesn't need to be: GPU sweeps the
+full profile grid (the map: modes, gradients, cliffs); the fp64 CPU solver
+re-verifies the envelope edge — the boundary band the decision actually rests
+on (~30–60 cells, well under a second across cores). CPU stays the authority
+on every published number; the GPU buys the map and a ~10× reduction in what
+the CPU must simulate. The safe-side bias means the GPU map errs toward
+tighter envelopes, never looser ones, which is the correct failure direction
+for a safety product.
+
+Full 300-pallet study: `data/agreement_study.parquet` (see summary in repo).
+
 ## Phase 2 — Grid backend
 
 Goal: `GridAnalyzer` — the GPU-native replacement for double bisection.
