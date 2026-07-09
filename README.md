@@ -295,3 +295,4 @@ Latest local validation:
 - Add container packaging for demo deployment.
 - Promote the trust UI into a production-ready frontend if the demo validates.
 
+MIT License
