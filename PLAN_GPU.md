@@ -37,6 +37,36 @@ Known constraints to design around, from the MJWarp docs:
 - No per-world early termination — worlds run the full duration. The grid doesn't need fail-fast: wall-clock is set by the slowest world, which is the same duration for all.
 - `IMPLICITFAST` integrator and `PGS` solver unsupported — check what `mjcf_builder` emits in `<option>` and confirm the fallback (Euler/Newton solver) matches CPU settings, or align both sides explicitly.
 
+### Phase 0 results (2026-07-08, `scripts/gpu_spike.py`, 1× RTX 5090)
+
+**GO.** All load-bearing MJCF features work on mjwarp 3.10: weld wrap
+constraints, freejoints, box-box contacts, velocity-actuated conveyor.
+
+- Verdicts: 8/8 failure-mode agreement (GPU/euler/fp32 vs CPU/euler/fp64) on
+  tall-unwrapped-tower across 8 speeds; failure times within one 33 Hz frame.
+  CPU implicitfast vs euler also agreed 8/8 — integrator confound looks small.
+- Gotchas found: default `njmax` overflows at 144 for an 8-item scene (dropped
+  constraints → NaNs) — pass `nconmax=256, njmax=1024` explicitly.
+  `implicitfast` unsupported → override integrator to Euler before `put_model`.
+  First-process Warp kernel compile ≈ 26 s (disk-cached afterward).
+- Throughput (1000-step rollouts, device-side ctrl table + trace recording,
+  whole rollout as one CUDA graph, single sync):
+  | worlds | rollout | steps/s | vs 16-core CPU |
+  |---|---|---|---|
+  | 512 | 1.8 s | 279k | 1.0× |
+  | 2048 | 2.6 s | 790k | 2.7× |
+  | 4096 | 4.0 s | 1.01M | 3.5× |
+  | 8192 | 6.8 s | 1.20M | 4.1× |
+- **Bottleneck is not physics: CUDA-graph capture is ~5–6 s per pallet**
+  (scales with kernel-launch count, ~70/step × 1000 steps). Phase 2 must
+  either (a) capture a 1-step graph with a device-side step counter indexing
+  the ctrl table, replayed N times, or (b) reuse a whole-rollout graph across
+  same-topology pallets by overwriting `m` field arrays in place. Without a
+  graph, per-step Python launch overhead caps everything at ~88–300 sims/s.
+- fp32 boundary jitter is visible: max-safe-speed rows show ±1-grid-cell
+  non-monotonicity near the failure edge — exactly the flip band Phase 1
+  quantifies.
+
 ## Phase 1 — Agreement study (the gate)
 
 Goal: quantify fp32-GPU vs fp64-CPU disagreement before trusting any GPU verdict.

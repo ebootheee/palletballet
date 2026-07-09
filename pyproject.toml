@@ -17,6 +17,13 @@ dependencies = [
     "requests>=2.31",
 ]
 
+[project.optional-dependencies]
+# GPU envelope-grid backend (PLAN_GPU.md). Pinned to a minor version: the
+# package is alpha and its API churns release-to-release.
+gpu = [
+    "mujoco-warp[cuda]>=3.10,<3.11",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",
