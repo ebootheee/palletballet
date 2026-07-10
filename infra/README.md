@@ -1,4 +1,4 @@
-# PalletBallet — home-server deployment
+# PalletBallet — deployment
 
 Runs the FastAPI service behind a Cloudflare Tunnel, with Watchtower auto-pulling new images from GHCR on every push to `main`.
 
@@ -9,13 +9,27 @@ Runs the FastAPI service behind a Cloudflare Tunnel, with Watchtower auto-pullin
               Cloudflare Worker         Cloudflare Tunnel
               (bootheio-main,                   │
                serves Astro page)               ▼
-                                       home server (Docker):
+                                       server (Docker or TrueNAS app):
                                          ┌──────────────────┐
                                          │ cloudflared      │
                                          │ palletballet     │ ← FastAPI :8000
                                          │ watchtower       │ ← pulls GHCR
                                          └──────────────────┘
 ```
+
+## Where it runs
+
+This stack runs anywhere Docker Compose does. The live demo runs as a
+**TrueNAS SCALE (25.10+) Custom App**: paste this `docker-compose.yml` via
+**Apps → Discover → Install via YAML** with `${TUNNEL_TOKEN}` replaced
+inline, and manage it through the TrueNAS UI afterwards — TrueNAS owns its
+Docker daemon, so avoid raw `docker` commands against app containers there.
+
+Migration/rollback tip: a Cloudflare tunnel accepts multiple simultaneous
+connectors, so you can bring the stack up on a new host before stopping the
+old one for a zero-downtime move. Note that `/solve` is single-thread
+CPU-bound — solve latency tracks the host's single-core speed, not core
+count. Fine for demo traffic; real deployments should size their own infra.
 
 ## One-time setup
 
@@ -70,6 +84,10 @@ curl https://palletballet-api.boothe.io/healthz
 4. The `cloudflared` and `watchtower` containers are pinned to whatever you started — they don't auto-update (only containers with the `com.centurylinklabs.watchtower.enable=true` label do, which is just `palletballet`)
 
 ## Manual operations
+
+On TrueNAS, use the UI (Apps → palletballet → workload logs / stop /
+start) — the docker socket there is middleware-managed. On a plain Docker
+host:
 
 ```bash
 docker compose pull palletballet && docker compose up -d palletballet   # force update now

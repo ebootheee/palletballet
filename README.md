@@ -249,10 +249,10 @@ it is not trying to replace them.
 
 ## Deployment
 
-The live demo runs on a home Ubuntu server fronted by a Cloudflare Tunnel. The
-service is published as a Docker image to GHCR on every push to `main`, and
-Watchtower on the server pulls and restarts within 5 minutes. See
-[`infra/README.md`](infra/README.md) for the full setup.
+The live demo runs on a home TrueNAS box (as a Docker Compose Custom App)
+fronted by a Cloudflare Tunnel. The service is published as a Docker image to
+GHCR on every push to `main`, and Watchtower on the server pulls and restarts
+within 5 minutes. See [`infra/README.md`](infra/README.md) for the full setup.
 
 If you want to host your own copy: clone, `docker compose up -d` in `infra/`,
 done. Cloudflare Containers (GA April 2026) is also a viable target for the
