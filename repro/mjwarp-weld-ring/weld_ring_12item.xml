@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mujoco model="P-e87a1613">
+  <compiler angle="degree" coordinate="local"/>
+  <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast"/>
+  <asset>
+    <material name="palletmat" rgba="0.55 0.38 0.22 1"/>
+    <material name="itemmat" rgba="0.78 0.65 0.45 1"/>
+    <material name="beltmat" rgba="0.25 0.25 0.28 1"/>
+  </asset>
+  <worldbody>
+    <light pos="0 0 4" dir="0 0 -1" diffuse="0.8 0.8 0.8"/>
+    <geom name="conveyor" type="plane" size="10.0 2.0 0.1" pos="0 0 0" friction="0.4949 0.005 0.0001" material="beltmat"/>
+    <body name="pallet_base" pos="0 0 0.07500">
+      <freejoint name="pallet_joint"/>
+      <geom name="pallet_geom" type="box" size="0.60000 0.40000 0.07500" mass="25.0" friction="0.4949 0.005 0.0001" material="palletmat"/>
+    </body>
+    <body name="item_0" pos="-0.35000 -0.25000 0.25000" euler="0 0 0.0">
+      <freejoint name="item_0_joint"/>
+      <geom name="item_0_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_1" pos="0.00000 -0.25000 0.25000" euler="0 0 0.0">
+      <freejoint name="item_1_joint"/>
+      <geom name="item_1_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_2" pos="0.35000 -0.25000 0.25000" euler="0 0 0.0">
+      <freejoint name="item_2_joint"/>
+      <geom name="item_2_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_3" pos="-0.35000 0.00000 0.25000" euler="0 0 0.0">
+      <freejoint name="item_3_joint"/>
+      <geom name="item_3_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_4" pos="0.00000 0.00000 0.25000" euler="0 0 0.0">
+      <freejoint name="item_4_joint"/>
+      <geom name="item_4_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_5" pos="0.35000 0.00000 0.25000" euler="0 0 0.0">
+      <freejoint name="item_5_joint"/>
+      <geom name="item_5_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_6" pos="-0.35000 0.25000 0.25000" euler="0 0 0.0">
+      <freejoint name="item_6_joint"/>
+      <geom name="item_6_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_7" pos="0.00000 0.25000 0.25000" euler="0 0 0.0">
+      <freejoint name="item_7_joint"/>
+      <geom name="item_7_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_8" pos="-0.35000 -0.25000 0.45000" euler="0 0 90.0">
+      <freejoint name="item_8_joint"/>
+      <geom name="item_8_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_9" pos="0.00000 -0.25000 0.45000" euler="0 0 90.0">
+      <freejoint name="item_9_joint"/>
+      <geom name="item_9_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_10" pos="0.35000 -0.25000 0.45000" euler="0 0 90.0">
+      <freejoint name="item_10_joint"/>
+      <geom name="item_10_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+    <body name="item_11" pos="-0.35000 0.00000 0.45000" euler="0 0 90.0">
+      <freejoint name="item_11_joint"/>
+      <geom name="item_11_geom" type="box" size="0.17500 0.12500 0.10000" mass="9.0" friction="0.4949 0.005 0.0001"/>
+    </body>
+  </worldbody>
+  <equality>
+    <weld body1="pallet_base" body2="item_0" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_1" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_2" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_3" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_4" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_5" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_6" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_7" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_8" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_9" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_10" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+    <weld body1="pallet_base" body2="item_11" solref="0.02 1" solimp="0.95 0.99 0.001"/>
+  </equality>
+</mujoco>
